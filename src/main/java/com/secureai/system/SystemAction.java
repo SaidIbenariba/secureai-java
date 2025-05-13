@@ -9,6 +9,7 @@ import com.secureai.utils.RandomUtils;
 import com.secureai.utils.YAML;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import com.secureai.utils.AttackType;
 
 @Data
 @AllArgsConstructor
@@ -16,6 +17,13 @@ public class SystemAction {
 
     private String resourceId;
     private String actionId;
+    private AttackType predictedAttack;
+
+    public SystemAction(String resourceId, String actionId) {
+        this.resourceId = resourceId;
+        this.actionId = actionId;
+        this.predictedAttack = AttackType.NONE;
+    }
 
     public void run(SystemEnvironment environment) {
 

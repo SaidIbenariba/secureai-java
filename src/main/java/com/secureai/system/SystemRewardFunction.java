@@ -5,6 +5,7 @@ import com.secureai.DynDQNMain;
 import com.secureai.model.actionset.Action;
 import com.secureai.rl.abs.RewardFunction;
 import lombok.Getter;
+import com.secureai.utils.*;
 
 import java.util.Arrays;
 
@@ -24,17 +25,45 @@ public class SystemRewardFunction implements RewardFunction<SystemState, SystemA
         this.maxExecutionCost = this.environment.getActionSet().getActions().values().stream().map(Action::getExecutionCost).max(Double::compareTo).orElse(0d);
     }
 
-    @Override
-    public double reward(SystemState oldState, SystemAction systemAction, SystemState currentState) {
+//    @Override
+//    public double reward(SystemState oldState, SystemAction systemAction, SystemState currentState) {
+//
+//        Action action = this.environment.getActionSet().getActions().get(systemAction.getActionId());
+//
+//        if(oldState.equals(currentState) && systemAction.checkPreconditions(this.environment, action) != true  ) {
+//            return -2; // This is the reward if the policy choose an action that cannot be run or keeps the system in the same state
+//        }
+//
+//        return -(Config.TIME_WEIGHT * (action.getExecutionTime() / this.maxExecutionTime) + Config.COST_WEIGHT * (action.getExecutionCost() / this.maxExecutionCost));
+//    }
+@Override
+public double reward(SystemState oldState, SystemAction action, SystemState currentState) {
 
-        Action action = this.environment.getActionSet().getActions().get(systemAction.getActionId());
+    // -------------------
+    // Reward shaping (AI-based attack detection)
+    // -------------------
+    AttackType actual = environment.getCurrentAttackType();
+    AttackType predicted = action.getPredictedAttack(); // ← you added this field
+    int detectionTime = environment.getStep();
 
-        if(oldState.equals(currentState) && systemAction.checkPreconditions(this.environment, action) != true  ) {
-            return -2; // This is the reward if the policy choose an action that cannot be run or keeps the system in the same state
-        }
-
-        return -(Config.TIME_WEIGHT * (action.getExecutionTime() / this.maxExecutionTime) + Config.COST_WEIGHT * (action.getExecutionCost() / this.maxExecutionCost));
+    if (actual != AttackType.NONE) {
+        // If there is an ongoing attack, use shaped reward
+        return RewardShapingUtils.calculateReward(actual, predicted, detectionTime);
     }
+
+    // -------------------
+    // Standard reward based on system efficiency
+    // -------------------
+    Action modelAction = this.environment.getActionSet().getActions().get(action.getActionId());
+
+    if (oldState.equals(currentState) && !action.checkPreconditions(this.environment, modelAction)) {
+        return -2; // Penalty for non-executable action or no effect
+    }
+
+    return -(Config.TIME_WEIGHT * (modelAction.getExecutionTime() / this.maxExecutionTime) +
+            Config.COST_WEIGHT * (modelAction.getExecutionCost() / this.maxExecutionCost));
+}
+
 
 
     /*

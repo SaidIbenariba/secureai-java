@@ -1,4 +1,4 @@
-package com.secureai;
+package main;
 
 import com.secureai.nn.DynNNBuilder;
 import com.secureai.utils.ScoreWriterListener;

@@ -5,6 +5,8 @@ import com.secureai.model.actionset.ActionSet;
 import com.secureai.model.stateset.State;
 import com.secureai.model.topology.Topology;
 import com.secureai.rl.abs.SMDP;
+import com.secureai.utils.AttackScenarioGenerator;
+import com.secureai.utils.AttackType;
 import com.secureai.utils.MapCounter;
 import com.secureai.utils.Stat;
 import lombok.Getter;
@@ -13,7 +15,8 @@ import org.deeplearning4j.rl4j.space.DiscreteSpace;
 import org.json.JSONObject;
 
 public class SystemEnvironment implements SMDP<SystemState, Integer, DiscreteSpace> {
-
+    @Getter
+    private AttackType currentAttackType;
     @Getter
     private SystemActionSpace actionSpace;
     @Getter
@@ -65,6 +68,9 @@ public class SystemEnvironment implements SMDP<SystemState, Integer, DiscreteSpa
             this.stat.append(this.cumulativeReward);
             System.out.println(String.format(Config.GREEN+"[Episode %d][Steps: %d][Cumulative Reward: %f]"+Config.RESET+"[Action bins %s]", this.episodes, this.step, this.cumulativeReward, this.actionCounter));
         }
+
+        this.currentAttackType = AttackScenarioGenerator.generate();
+        this.systemState.injectAttack("resource1", this.currentAttackType);
 
         this.systemState.reset();
         this.step = 0;

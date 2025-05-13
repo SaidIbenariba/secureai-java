@@ -2,10 +2,12 @@ package com.secureai.system;
 
 import com.secureai.DynDQNMain;
 import com.secureai.rl.abs.DiscreteState;
+import com.secureai.utils.AttackType;
 import com.secureai.utils.RandomUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import com.secureai.model.stateset.State;
 import spire.algebra.Bool;
+
 
 import java.util.Arrays;
 import java.util.stream.IntStream;
@@ -152,6 +154,24 @@ public class SystemState extends DiscreteState {
         return this.newInstance(this.toIntArray());
     }
 
+    public void injectAttack(String resourceId, AttackType attackType) {
+        switch (attackType) {
+            case DOS:
+                this.set(resourceId, State.appAvailable, false);
+                this.set(resourceId, State.firewallSoftBandwidthLimit, true);
+                break;
+            case PORT_SCAN:
+                this.set(resourceId, State.firewallBlockICMP, false);
+                break;
+            case MALWARE:
+                this.set(resourceId, State.containerCorrupted, true);
+                this.set(resourceId, State.dockerRuncUpdated, false);
+                break;
+            default:
+                // No attack: do nothing
+                break;
+        }
+    }
 
 
 }

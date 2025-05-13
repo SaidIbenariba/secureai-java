@@ -1,6 +1,7 @@
-package com.secureai;
+package main;
 
 import com.secureai.model.actionset.ActionSet;
+import com.secureai.model.stateset.State;
 import com.secureai.model.topology.Topology;
 import com.secureai.system.SystemEnvironment;
 import com.secureai.system.SystemState;
@@ -26,7 +27,8 @@ public class DataTest {
         SystemState newSystemState = systemState.newInstance(systemState.toInt());
         System.out.println(Arrays.toString(systemState.toArray()));
         System.out.println(systemState.equals(newSystemState));
-        systemState.set("api-gateway-main.0", State.active, true);
+        State active = State.active;
+        systemState.set("api-gateway-main.0", active, true);
         System.out.println(systemState.equals(newSystemState));
         systemState.setFromInt(newSystemState.toInt());
         System.out.println(systemState.equals(newSystemState));

@@ -1,4 +1,4 @@
-package com.secureai;
+package main;
 
 import org.apache.log4j.BasicConfigurator;
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
