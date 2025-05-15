@@ -12,17 +12,17 @@ import lombok.Data;
 import com.secureai.utils.AttackType;
 
 @Data
-@AllArgsConstructor
+//@AllArgsConstructor
 public class SystemAction {
 
     private String resourceId;
     private String actionId;
-    private AttackType predictedAttack;
+//    private AttackType predictedAttack;
 
     public SystemAction(String resourceId, String actionId) {
         this.resourceId = resourceId;
         this.actionId = actionId;
-        this.predictedAttack = AttackType.NONE;
+//        this.predictedAttack = AttackType.NONE;
     }
 
     public void run(SystemEnvironment environment) {

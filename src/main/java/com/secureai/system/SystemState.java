@@ -26,10 +26,11 @@ public class SystemState extends DiscreteState {
         super.reset();
         //this.worst();
         //this.random();
-        if(DynDQNMain.random == false)
+        if(!DynDQNMain.random)
             this.worst();
         else
             this.random();
+
     }
 
     public void random() {

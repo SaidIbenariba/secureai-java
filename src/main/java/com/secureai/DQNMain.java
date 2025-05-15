@@ -107,14 +107,14 @@ public class DQNMain {
         System.out.println("[Play] Starting adversarial evaluation…");
         int EPISODES = 20;
         double[] epsilons = new double[]{0.0, 0.01, 0.05, 0.1, 0.2};
+//
+//        AdversarialEvaluator eval = new AdversarialEvaluator(dql, mdp);
+//        AdversarialAttack fgsm    = new FGSMAttack();
 
-        AdversarialEvaluator eval = new AdversarialEvaluator(dql, mdp);
-        AdversarialAttack fgsm    = new FGSMAttack();
-
-        // 1) Clean vs. adversarial reward
-        double cleanAvg = eval.computeCleanReward(EPISODES);
-        double advAvg05 = eval.computeAdversarialReward(fgsm, 0.05, EPISODES);
-        System.out.printf("Clean Reward=%.3f, Adv@0.05 Reward=%.3f%n", cleanAvg, advAvg05);
+        // 1) comparaison Clean vs. adversarial reward
+//        double cleanAvg = eval.computeCleanReward(EPISODES);
+//        double advAvg05 = eval.computeAdversarialReward(fgsm, 0.05, EPISODES);
+//        System.out.printf("Clean Reward=%.3f, Adv@0.05 Reward=%.3f%n", cleanAvg, advAvg05);
 //        int EPISODES = 10;
 //        double rewards = 0;
 //        ArrayList<Double> episodeRewards = new ArrayList<>();

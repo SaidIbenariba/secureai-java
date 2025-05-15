@@ -83,7 +83,6 @@ public class RLExample {
 
         //load the previous agent
         DQNPolicy<Box> pol = DQNPolicy.load("/tmp/pol1");
-
         //evaluate the agent
         double rewards = 0;
         for (int i = 0; i < 1000; i++) {

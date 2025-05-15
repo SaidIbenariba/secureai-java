@@ -26,14 +26,16 @@ import org.deeplearning4j.rl4j.util.DataManagerTrainingListener;
 import org.deeplearning4j.rl4j.util.IDataManager.StatEntry;
 import org.deeplearning4j.ui.stats.StatsListener;
 
+import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.api.ndarray.INDArray;
 
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.io.PrintWriter;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
@@ -51,7 +53,7 @@ public class DynDQNMain {
     public static boolean evaluate = true; // if true perform evaluation at the end of each training
     public static boolean transferLearning = false; // if true new NN will be initialized from previous one
     public static int maxIterations; // Total number of test iterations
-    public static boolean training = true; // true if the process is currently during training (used for console output purposes)
+    public static boolean training = false; // true if the process is currently during training (used for console output purposes)
 
 
     public static boolean random = false;
@@ -88,7 +90,7 @@ public class DynDQNMain {
         int EPOCH_THRESHOLD = 200; // After X epochs
 
         DynDQNMain.setup();
-
+        
         dql.addListener(new EpochEndListener() {
             @Override
             public ListenerResponse onEpochTrainingResult(IEpochTrainer iEpochTrainer, StatEntry statEntry) {
@@ -214,16 +216,17 @@ public class DynDQNMain {
         }*/
         //---------------------------------------------------------------------------------
 
+
         QLearning.QLConfiguration qlConfiguration = new QLearning.QLConfiguration(
                 Integer.parseInt(argsMap.getOrDefault("seed", "42")),                //Random seed
                 Integer.parseInt(argsMap.getOrDefault("maxEpochStep", "500")),       //Max step By epoch
-                Integer.parseInt(argsMap.getOrDefault("maxStep", "10000")),           //Max step
-                Integer.parseInt(argsMap.getOrDefault("expRepMaxSize", "200")),      //Max size of experience replay
+                Integer.parseInt(argsMap.getOrDefault("maxStep", "250000")),            //Max step 250000
+                Integer.parseInt(argsMap.getOrDefault("expRepMaxSize", "5000")),      //Max size of experience replay 5000
                 Integer.parseInt(argsMap.getOrDefault("batchSize", "64")),           //size of batches
                 Integer.parseInt(argsMap.getOrDefault("targetDqnUpdateFreq", "100")), //target update (hard)
                 Integer.parseInt(argsMap.getOrDefault("updateStart", "0")),           //num step noop warmup
-                Double.parseDouble(argsMap.getOrDefault("rewardFactor", "0.01")),        //reward scaling
-                Double.parseDouble(argsMap.getOrDefault("gamma", "0.99")),            //gamma
+                Double.parseDouble(argsMap.getOrDefault("rewardFactor", "1")),        //reward scaling
+                Double.parseDouble(argsMap.getOrDefault("gamma", "0.75")),            //gamma
                 Double.parseDouble(argsMap.getOrDefault("errorClamp", "0.5")),        //td-error clipping
                 Float.parseFloat(argsMap.getOrDefault("minEpsilon", "0.01")),         //min epsilon
                 Integer.parseInt(argsMap.getOrDefault("epsilonNbStep", "10000")),      //num step for eps greedy anneal
@@ -274,100 +277,169 @@ public class DynDQNMain {
     }
 
 
-    public static void train(){
-
+    public static void train() {
         training = true;
         long trainingTime = System.nanoTime();
-        dql.train();
-        trainingTime = (System.nanoTime() - trainingTime)/1000000000;
-        Logger.getAnonymousLogger().info("[Time] Total training time (seconds):"+trainingTime);
+
+        dql.train();  // RL4J training
+
+        trainingTime = (System.nanoTime() - trainingTime) / 1_000_000_000;
+        Logger.getAnonymousLogger().info("[Time] Total training time (seconds): " + trainingTime);
         training = false;
-    }
 
+        // Save model after training
+        try {
+            File modelDir = new File("models");
+            if (!modelDir.exists()) modelDir.mkdir();  // create a 'models' folder if it doesn't exist
 
-    public static void evaluate() {
-//        System.out.println("[Play] Starting adversarial evaluation…");
-//        int EPISODES = 20;
-//        double[] epsilons = new double[]{0.0, 0.01, 0.05, 0.1, 0.2};
-//
-//        AdversarialEvaluator eval = new AdversarialEvaluator(dql, mdp);
-//        AdversarialAttack fgsm    = new FGSMAttack();
-//
-//        // 1) Clean vs. adversarial reward
-//        double cleanAvg = eval.computeCleanReward(EPISODES);
-//        double advAvg05 = eval.computeAdversarialReward(fgsm, 0.05, EPISODES);
-//        System.out.printf("Clean Reward=%.3f, Adv@0.05 Reward=%.3f%n", cleanAvg, advAvg05);
-//
-//        // 2) Attack Success Rate
-//        double asr05 = eval.computeAttackSuccessRate(fgsm, 0.05, EPISODES);
-//        System.out.printf("Attack Success Rate @0.05 = %.2f%%%n", asr05);
-//
-//        // 3) Greedy Worst-Case Reward
-//        double gwc05 = eval.computeGreedyWorstCaseReward(fgsm, 0.05, EPISODES);
-//        System.out.printf("Greedy Worst-Case Reward @0.05 = %.3f%n", gwc05);
-//
-//        // 4) Robustness Curve
-//        Map<Double, Double> curve = eval.computeRobustnessCurve(fgsm, epsilons, EPISODES);
-//        curve.forEach((eps, r) -> System.out.printf("ε=%.2f → Reward=%.3f%n", eps, r));
-
-//        System.out.println("[Play] Starting experiment [iteration: "+ iteration +"] ");
-//        int EPISODES = 10;
-//        double rewards = 0;
-//        for (int i = 0; i < EPISODES; i++) {
-//            mdp.reset();
-//            System.out.println("play policy (episode "+(i+1)+")");
-//            double reward = dql.getPolicy().play(mdp);
-//            rewards += reward;
-//            Logger.getAnonymousLogger().info("[Evaluate] Reward (episode "+(i+1)+"): " + reward);
-//        }
-//        Logger.getAnonymousLogger().info("[Evaluate] Average reward: " + rewards / EPISODES);
-//    }
-        System.out.println("[Evaluate] Starting experiment [iteration: " + iteration + "]");
-        int EPISODES = 10;
-        double totalReward = 0;
-
-        for (int ep = 0; ep < EPISODES; ep++) {
-            mdp.reset();
-            double episodeReward = 0;
-            int step = 0;
-
-            while (!mdp.isDone()) {
-                SystemState state = mdp.getState();
-                INDArray input = Nd4j.create(state.toArray()).reshape(1, state.toArray().length);
-                int actionIndex = dql.getPolicy().nextAction(input);
-                SystemAction action = mdp.getActionSpace().encode(actionIndex);
-
-                // Simple rule-based attack prediction (for now)
-                AttackType predictedAttack = AttackScenarioGenerator.generate();
-                if (action.getActionId().toLowerCase().contains("block")) {
-                    predictedAttack = AttackType.PORT_SCAN;
-                } else if (action.getActionId().toLowerCase().contains("limit")) {
-                    predictedAttack = AttackType.DOS;
-                }
-
-                action.setPredictedAttack(predictedAttack);
-                StepReply<SystemState> reply = mdp.step(actionIndex);
-
-                AttackType actualAttack = mdp.getCurrentAttackType();
-                double shapedReward = RewardShapingUtils.calculateReward(actualAttack, predictedAttack, step);
-
-                episodeReward += shapedReward;
-                step++;
-
-                Logger.getAnonymousLogger().info(
-                        String.format("[Evaluate] Step %d | Actual: %s | Predicted: %s | Reward: %.2f",
-                                step, actualAttack, predictedAttack, shapedReward));
-            }
-
-            totalReward += episodeReward;
-            Logger.getAnonymousLogger().info("[Evaluate] Episode " + (ep + 1) + " Total Reward: " + episodeReward);
+            File modelFile = new File(modelDir, "dyn-trained-model.zip");
+            ModelSerializer.writeModel(nn, modelFile, true); // includes updater state
+            Logger.getAnonymousLogger().info("[Model] Trained model saved to 'models/dyn-trained-model.zip'");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        Logger.getAnonymousLogger().info("[Evaluate] Average Reward: " + totalReward / EPISODES);
     }
-//    public static double calculateReward() {
-//        mdp.get
+
+
+//    public static void evaluate() {
+//        System.out.println("[Evaluate] Starting experiment [iteration: " + iteration + "]");
+//        int EPISODES = 10;
+//        double totalReward = 0;
+//
+//        for (int ep = 0; ep < EPISODES; ep++) {
+//            mdp.reset();
+//            double episodeReward = 0;
+//            int step = 0;
+//
+//            while (!mdp.isDone()) {
+//                SystemState state = mdp.getState();
+//                INDArray input = Nd4j.create(state.toArray()).reshape(1, state.toArray().length);
+//                int actionIndex = dql.getPolicy().nextAction(input);
+//                SystemAction action = mdp.getActionSpace().encode(actionIndex);
+//
+//                // Simple rule-based attack prediction (for now)
+//                AttackType predictedAttack = AttackScenarioGenerator.generate();
+//                if (action.getActionId().toLowerCase().contains("block")) {
+//                    predictedAttack = AttackType.PORT_SCAN;
+//                } else if (action.getActionId().toLowerCase().contains("limit")) {
+//                    predictedAttack = AttackType.DOS;
+//                }
+//
+//                action.setPredictedAttack(predictedAttack);
+//                StepReply<SystemState> reply = mdp.step(actionIndex);
+//
+//                AttackType actualAttack = mdp.getCurrentAttackType();
+//                double shapedReward = RewardShapingUtils.calculateReward(actualAttack, predictedAttack, step);
+//
+//                episodeReward += shapedReward;
+//                step++;
+//
+//                Logger.getAnonymousLogger().info(
+//                        String.format("[Evaluate] Step %d | Actual: %s | Predicted: %s | Reward: %.2f",
+//                                step, actualAttack, predictedAttack, shapedReward));
+//            }
+//
+//            totalReward += episodeReward;
+//            Logger.getAnonymousLogger().info("[Evaluate] Episode " + (ep + 1) + " Total Reward: " + episodeReward);
+//        }
+//
+//        Logger.getAnonymousLogger().info("[Evaluate] Average Reward: " + totalReward / EPISODES);
 //    }
 
+    //
+public static void evaluate() {
+    DynDQNMain.random = true;
+    Logger.getAnonymousLogger().info("[Evaluate] Starting experiment [iteration: " + iteration + "]");
+    System.out.println("[Evaluate] Starting experiment [iteration: " + iteration + "]");
+    int EPISODES = 10;
+    double totalReward = 0;
+    DynDQNMain.training = false;
+
+    // read trained model file
+    File modelFile = new File("models/dyn-trained-model.zip");
+    if (modelFile.exists()) {
+        try {
+            nn = ModelSerializer.restoreMultiLayerNetwork(modelFile);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        dql = new QLearningDiscreteDense<>(mdp, new DQN<>(nn), dql.getConfiguration());
+        Logger.getAnonymousLogger().info("[Model] Loaded trained model from 'models/dyn-trained-model.zip'");
+    } else {
+        Logger.getAnonymousLogger().warning("[Model] Trained model not found. Evaluation will use current model.");
+    }
+
+//    String filename = "output/evaluation-results.csv";
+//    FileWriter writer;
+//    boolean newFile = !(new File(filename).exists());
+//    try {
+//        writer = new FileWriter(filename,true);
+//        if(newFile) {
+//            writer.write("AgentType,Episode,TotalReward,Steps,InvalidActions\n");
+//        }
+//    }catch(IOException e){
+//        e.printStackTrace();
+//    }
+    List<Double>  episodeRewards = new ArrayList<>();
+    Map<String, Integer> actionCounts=   new HashMap<>() ;
+
+    for (int ep = 0; ep < EPISODES; ep++) {
+        mdp.reset();  // this will still randomly inject an attack, but you can change that too
+        double episodeReward = 0;
+        int step = 0;
+        int maxSteps = 1000;
+        while (!mdp.isDone() && step < maxSteps) {
+            SystemState state = mdp.getState();
+            INDArray input = Nd4j.create(state.toArray()).reshape(1, state.toArray().length);
+            int actionIndex = dql.getPolicy().nextAction(input);
+
+            // Just step with that action
+            StepReply<SystemState> reply = mdp.step(actionIndex);
+            double reward = reply.getReward();  // this is what your RL agent was trained on
+
+            episodeReward += reward;
+            step++;
+
+            Logger.getAnonymousLogger().info(
+                    String.format("[Evaluate] Step %d | Action: %s | Reward: %.2f",
+                            step,
+                            mdp.getActionSpace().encode(actionIndex).getActionId(),
+                            reward)
+            );
+            String actionId = mdp.getActionSpace().encode(actionIndex).getActionId();
+            actionCounts.put(actionId, actionCounts.getOrDefault(actionId, 0) + 1);
+
+        }
+        episodeRewards.add(episodeReward);
+        totalReward += episodeReward;
+        Logger.getAnonymousLogger().info("[Evaluate] Episode " + (ep + 1) + " Total Reward: " + episodeReward);
+
+    }
+    // Save episode rewards to CSV
+    try (PrintWriter pw = new PrintWriter(new File("output/evaluation_rewards.csv"))) {
+        pw.println("episode,total_reward");
+        for (int i = 0; i < episodeRewards.size(); i++) {
+            pw.println((i + 1) + "," + episodeRewards.get(i));
+        }
+        System.out.println("[Evaluate] Saved rewards to evaluation_rewards.csv");
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+
+// Save action distribution to CSV
+    try (PrintWriter pw = new PrintWriter(new File("output/action_histogram.csv"))) {
+        pw.println("action,count");
+        for (Map.Entry<String, Integer> entry : actionCounts.entrySet()) {
+            pw.println(entry.getKey() + "," + entry.getValue());
+        }
+        System.out.println("[Evaluate] Saved action histogram to action_histogram.csv");
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+
+
+    Logger.getAnonymousLogger().info("[Evaluate] Average Reward: " + totalReward / EPISODES);
+
+}
 }
 

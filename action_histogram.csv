@@ -1,0 +1,5 @@
+action,count
+healSecure,4999
+start,2001
+addSoftBandwidthLimit,1000
+addHeavyBandwidthLimit,2000
