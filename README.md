@@ -11,7 +11,7 @@ Amélioration d’un agent DQN pour l’auto-défense d’un système virtuel (V
 ## 📖 Basé sur
 Projet original issu d’un environnement SecureAI simulé avec des topologies YAML, utilisant Deeplearning4J (RL4J).
 
-- Lien GitHub source initiale : [https://github.com/nom-utilisateur/projet-original](#)
+- Lien GitHub source initiale : [https://github.com/MatteoLucantonio/secureai-java](#)
 
 ## 🎯 Objectif du projet
 
