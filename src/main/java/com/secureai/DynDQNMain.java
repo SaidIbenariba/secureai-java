@@ -54,7 +54,7 @@ public class DynDQNMain {
     public static boolean transferLearning = false; // if true new NN will be initialized from previous one
     public static int maxIterations; // Total number of test iterations
     public static boolean training = false; // true if the process is currently during training (used for console output purposes)
-
+    
 
     public static boolean random = false;
 
