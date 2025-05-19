@@ -39,6 +39,7 @@ public class SystemEnvironment implements SMDP<SystemState, Integer, DiscreteSpa
     private int episodes = 0;
     @Getter
     private double cumulativeReward = 0;
+    private static final int MAX_STEPS = 1000;
 
     private MapCounter<String> actionCounter;
     private Stat<Double> stat;
@@ -61,7 +62,7 @@ public class SystemEnvironment implements SMDP<SystemState, Integer, DiscreteSpa
     }
 
     public boolean isDone() {
-        return systemTerminateFunction.terminated(this.systemState);
+        return step >= MAX_STEPS || systemTerminateFunction.terminated(this.systemState);
     }
 
     public SystemState reset() {

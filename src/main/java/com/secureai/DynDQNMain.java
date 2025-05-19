@@ -53,8 +53,8 @@ public class DynDQNMain {
     public static boolean evaluate = true; // if true perform evaluation at the end of each training
     public static boolean transferLearning = false; // if true new NN will be initialized from previous one
     public static int maxIterations; // Total number of test iterations
-    public static boolean training = false; // true if the process is currently during training (used for console output purposes)
-    
+    public static boolean training = true; // true if the process is currently during training (used for console output purposes)
+
 
     public static boolean random = false;
 
@@ -347,99 +347,234 @@ public class DynDQNMain {
 //    }
 
     //
-public static void evaluate() {
-    DynDQNMain.random = true;
-    Logger.getAnonymousLogger().info("[Evaluate] Starting experiment [iteration: " + iteration + "]");
-    System.out.println("[Evaluate] Starting experiment [iteration: " + iteration + "]");
-    int EPISODES = 10;
-    double totalReward = 0;
-    DynDQNMain.training = false;
 
-    // read trained model file
-    File modelFile = new File("models/dyn-trained-model.zip");
-    if (modelFile.exists()) {
-        try {
-            nn = ModelSerializer.restoreMultiLayerNetwork(modelFile);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        dql = new QLearningDiscreteDense<>(mdp, new DQN<>(nn), dql.getConfiguration());
-        Logger.getAnonymousLogger().info("[Model] Loaded trained model from 'models/dyn-trained-model.zip'");
-    } else {
-        Logger.getAnonymousLogger().warning("[Model] Trained model not found. Evaluation will use current model.");
-    }
-
-//    String filename = "output/evaluation-results.csv";
-//    FileWriter writer;
-//    boolean newFile = !(new File(filename).exists());
-//    try {
-//        writer = new FileWriter(filename,true);
-//        if(newFile) {
-//            writer.write("AgentType,Episode,TotalReward,Steps,InvalidActions\n");
+//    public static void evaluate() {
+//    DynDQNMain.random = true;
+//    Logger.getAnonymousLogger().info("[Evaluate] Starting experiment [iteration: " + iteration + "]");
+//    System.out.println("[Evaluate] Starting experiment [iteration: " + iteration + "]");
+//    int EPISODES = 10;
+//    double totalReward = 0;
+//    DynDQNMain.training = false;
+//
+//    // read trained model file
+//    File modelFile = new File("models/dyn-trained-model.zip");
+//    if (modelFile.exists()) {
+//        try {
+//            nn = ModelSerializer.restoreMultiLayerNetwork(modelFile);
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
 //        }
-//    }catch(IOException e){
+//        dql = new QLearningDiscreteDense<>(mdp, new DQN<>(nn), dql.getConfiguration());
+//        Logger.getAnonymousLogger().info("[Model] Loaded trained model from 'models/dyn-trained-model.zip'");
+//    } else {
+//        Logger.getAnonymousLogger().warning("[Model] Trained model not found. Evaluation will use current model.");
+//    }
+//
+////    String filename = "output/evaluation-results.csv";
+////    FileWriter writer;
+////    boolean newFile = !(new File(filename).exists());
+////    try {
+////        writer = new FileWriter(filename,true);
+////        if(newFile) {
+////            writer.write("AgentType,Episode,TotalReward,Steps,InvalidActions\n");
+////        }
+////    }catch(IOException e){
+////        e.printStackTrace();
+////    }
+//    List<Double>  episodeRewards = new ArrayList<>();
+//    Map<String, Integer> actionCounts=   new HashMap<>() ;
+//
+//    for (int ep = 0; ep < EPISODES; ep++) {
+//        mdp.reset();  // this will still randomly inject an attack, but you can change that too
+//        double episodeReward = 0;
+//        int step = 0;
+//        int maxSteps = 1000;
+//        while (!mdp.isDone() && step < maxSteps) {
+//            SystemState state = mdp.getState();
+//            INDArray input = Nd4j.create(state.toArray()).reshape(1, state.toArray().length);
+//            int actionIndex = dql.getPolicy().nextAction(input);
+//
+//            // Just step with that action
+//            StepReply<SystemState> reply = mdp.step(actionIndex);
+//            double reward = reply.getReward();  // this is what your RL agent was trained on
+//
+//            episodeReward += reward;
+//            step++;
+//
+//            Logger.getAnonymousLogger().info(
+//                    String.format("[Evaluate] Step %d | Action: %s | Reward: %.2f",
+//                            step,
+//                            mdp.getActionSpace().encode(actionIndex).getActionId(),
+//                            reward)
+//            );
+//            String actionId = mdp.getActionSpace().encode(actionIndex).getActionId();
+//            actionCounts.put(actionId, actionCounts.getOrDefault(actionId, 0) + 1);
+//
+//        }
+//        episodeRewards.add(episodeReward);
+//        totalReward += episodeReward;
+//        Logger.getAnonymousLogger().info("[Evaluate] Episode " + (ep + 1) + " Total Reward: " + episodeReward);
+//
+//    }
+//    // Save episode rewards to CSV
+//    try (PrintWriter pw = new PrintWriter(new File("output/evaluation_rewards.csv"))) {
+//        pw.println("episode,total_reward");
+//        for (int i = 0; i < episodeRewards.size(); i++) {
+//            pw.println((i + 1) + "," + episodeRewards.get(i));
+//        }
+//        System.out.println("[Evaluate] Saved rewards to evaluation_rewards.csv");
+//    } catch (IOException e) {
 //        e.printStackTrace();
 //    }
-    List<Double>  episodeRewards = new ArrayList<>();
-    Map<String, Integer> actionCounts=   new HashMap<>() ;
+//
+//// Save action distribution to CSV
+//    try (PrintWriter pw = new PrintWriter(new File("output/action_histogram.csv"))) {
+//        pw.println("action,count");
+//        for (Map.Entry<String, Integer> entry : actionCounts.entrySet()) {
+//            pw.println(entry.getKey() + "," + entry.getValue());
+//        }
+//        System.out.println("[Evaluate] Saved action histogram to action_histogram.csv");
+//    } catch (IOException e) {
+//        e.printStackTrace();
+//    }
+//
+//
+//    Logger.getAnonymousLogger().info("[Evaluate] Average Reward: " + totalReward / EPISODES);
+//
+//}
 
-    for (int ep = 0; ep < EPISODES; ep++) {
-        mdp.reset();  // this will still randomly inject an attack, but you can change that too
-        double episodeReward = 0;
-        int step = 0;
-        int maxSteps = 1000;
-        while (!mdp.isDone() && step < maxSteps) {
-            SystemState state = mdp.getState();
-            INDArray input = Nd4j.create(state.toArray()).reshape(1, state.toArray().length);
-            int actionIndex = dql.getPolicy().nextAction(input);
+public static void evaluate() {
+//    Logger.getAnonymousLogger().info("[Evaluate] Starting evaluation using pre-trained model");
+//    DynDQNMain.training = false;
+//
+////     Load pre-trained model
+//    File modelFile = new File("models/dyn-trained-model.zip");
+//    if (!modelFile.exists()) {
+//        Logger.getAnonymousLogger().warning("Pre-trained model not found.");
+//        return;
+//    }
+//
+//    try {
+//        nn = ModelSerializer.restoreMultiLayerNetwork(modelFile);
+//        Logger.getAnonymousLogger().info("[Model] Loaded trained model.");
+//    } catch (IOException e) {
+//        e.printStackTrace();
+//        return;
+//    }
+//    dql = new QLearningDiscreteDense<>(mdp, new DQN<>(nn), dql.getConfiguration());
+//
+//    // Output CSV
+//    File outputDir = new File("output/system_run1");
+//    if (!outputDir.exists()) outputDir.mkdirs();
+//
+//    File statFile = new File(outputDir, "stat_5.csv");
+//    File epochFile = new File(outputDir, "epoch_reward_3.csv");
+//
+//    try (
+//            PrintWriter statWriter = new PrintWriter(statFile);
+//            PrintWriter epochWriter = new PrintWriter(epochFile)
+//    ) {
+//        statWriter.println("Episode\tTimestamp\tCumulative Reward");
+//        epochWriter.println("Episode\tReward");
+//
+//        long startTime = System.currentTimeMillis();
+//        int EPISODES = 10;
+////        double rewards = 0;
+//        for (int ep = 0; ep < EPISODES; ep++) {
+//            mdp.reset();
+//            System.out.println("play policy (episode "+(ep+1)+")");
+//            double episodeReward = 0;
+//            int step = 0;
+//            int maxSteps = 1000;
+//
+//            while (!mdp.isDone() && step < 1000) {
+//                SystemState state = mdp.getState();
+//                INDArray input = Nd4j.create(state.toArray()).reshape(1, state.toArray().length);
+//                int actionIndex = dql.getPolicy().nextAction(input);
+//                StepReply<SystemState> reply = mdp.step(actionIndex);
+//
+//                episodeReward += reply.getReward();
+//                step++;
+//
+//                long currentTimestamp = System.currentTimeMillis() - startTime;
+//                statWriter.printf("%d\t%d\t%.2f%n", ep + 1, currentTimestamp, episodeReward);
+//            }
+//
+//            epochWriter.printf("%d\t%.2f%n", ep + 1, episodeReward);
+//            Logger.getAnonymousLogger().info("[Evaluate] Episode " + (ep + 1) + " Reward: " + episodeReward);
+//        }
+//
+//        Logger.getAnonymousLogger().info("[Evaluate] Saved to output/system_run1/");
+//    } catch (IOException e) {
+//        e.printStackTrace();
+//    }
+    Logger.getAnonymousLogger().info("[Evaluate] Starting evaluation using pre-trained model");
+    DynDQNMain.training = false;
 
-            // Just step with that action
-            StepReply<SystemState> reply = mdp.step(actionIndex);
-            double reward = reply.getReward();  // this is what your RL agent was trained on
-
-            episodeReward += reward;
-            step++;
-
-            Logger.getAnonymousLogger().info(
-                    String.format("[Evaluate] Step %d | Action: %s | Reward: %.2f",
-                            step,
-                            mdp.getActionSpace().encode(actionIndex).getActionId(),
-                            reward)
-            );
-            String actionId = mdp.getActionSpace().encode(actionIndex).getActionId();
-            actionCounts.put(actionId, actionCounts.getOrDefault(actionId, 0) + 1);
-
-        }
-        episodeRewards.add(episodeReward);
-        totalReward += episodeReward;
-        Logger.getAnonymousLogger().info("[Evaluate] Episode " + (ep + 1) + " Total Reward: " + episodeReward);
-
+    // Load pre-trained model
+    File modelFile = new File("models/dyn-trained-model.zip");
+    if (!modelFile.exists()) {
+        Logger.getAnonymousLogger().warning("Pre-trained model not found.");
+        return;
     }
-    // Save episode rewards to CSV
-    try (PrintWriter pw = new PrintWriter(new File("output/evaluation_rewards.csv"))) {
-        pw.println("episode,total_reward");
-        for (int i = 0; i < episodeRewards.size(); i++) {
-            pw.println((i + 1) + "," + episodeRewards.get(i));
+
+    try {
+        nn = ModelSerializer.restoreMultiLayerNetwork(modelFile);
+        Logger.getAnonymousLogger().info("[Model] Loaded trained model.");
+    } catch (IOException e) {
+        e.printStackTrace();
+        return;
+    }
+
+    // Re-instantiate the DQL object with the loaded model
+    dql = new QLearningDiscreteDense<>(mdp, new DQN<>(nn), dql.getConfiguration());
+
+    // Output files
+    File outputDir = new File("output/system_run1");
+    if (!outputDir.exists()) outputDir.mkdirs();
+
+    File statFile = new File(outputDir, "stat_5.csv");
+    File epochFile = new File(outputDir, "epoch_reward_3.csv");
+
+    try (
+            PrintWriter statWriter = new PrintWriter(statFile);
+            PrintWriter epochWriter = new PrintWriter(epochFile)
+    ) {
+        statWriter.println("Episode\tTimestamp\tCumulative Reward");
+        epochWriter.println("Episode\tReward");
+
+        long startTime = System.currentTimeMillis();
+        int EPISODES = 10;
+        double totalReward = 0;
+
+        for (int i = 0; i < EPISODES; i++) {
+            mdp.reset();
+            System.out.println("[Play] Starting episode " + (i + 1));
+
+            double reward = 0;
+            int step = 0;
+            long currentTimestamp = System.currentTimeMillis() - startTime;
+
+            // Use built-in policy.play(...) for conveniencew
+            reward = dql.getPolicy().play(mdp);
+
+            // Collect cumulative reward and save
+            totalReward += reward;
+            statWriter.printf("%d\t%d\t%.2f%n", i + 1, currentTimestamp, reward);
+            epochWriter.printf("%d\t%.2f%n", i + 1, reward);
+
+            Logger.getAnonymousLogger().info("[Evaluate] Reward (episode " + (i + 1) + "): " + reward);
         }
-        System.out.println("[Evaluate] Saved rewards to evaluation_rewards.csv");
+
+        double avg = totalReward / EPISODES;
+        Logger.getAnonymousLogger().info("[Evaluate] Average reward: " + avg);
+        Logger.getAnonymousLogger().info("[Evaluate] Output written to: output/system_run1/");
     } catch (IOException e) {
         e.printStackTrace();
     }
-
-// Save action distribution to CSV
-    try (PrintWriter pw = new PrintWriter(new File("output/action_histogram.csv"))) {
-        pw.println("action,count");
-        for (Map.Entry<String, Integer> entry : actionCounts.entrySet()) {
-            pw.println(entry.getKey() + "," + entry.getValue());
-        }
-        System.out.println("[Evaluate] Saved action histogram to action_histogram.csv");
-    } catch (IOException e) {
-        e.printStackTrace();
-    }
-
-
-    Logger.getAnonymousLogger().info("[Evaluate] Average Reward: " + totalReward / EPISODES);
-
 }
+
+
+
 }
 

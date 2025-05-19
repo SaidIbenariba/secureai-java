@@ -164,10 +164,6 @@ public class SystemState extends DiscreteState {
             case PORT_SCAN:
                 this.set(resourceId, State.firewallBlockICMP, false);
                 break;
-            case MALWARE:
-                this.set(resourceId, State.containerCorrupted, true);
-                this.set(resourceId, State.dockerRuncUpdated, false);
-                break;
             default:
                 // No attack: do nothing
                 break;

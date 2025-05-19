@@ -12,18 +12,18 @@ import lombok.Data;
 import com.secureai.utils.AttackType;
 
 @Data
-//@AllArgsConstructor
+@AllArgsConstructor
 public class SystemAction {
 
     private String resourceId;
     private String actionId;
-//    private AttackType predictedAttack;
-
-    public SystemAction(String resourceId, String actionId) {
-        this.resourceId = resourceId;
-        this.actionId = actionId;
-//        this.predictedAttack = AttackType.NONE;
-    }
+////    private AttackType predictedAttack;
+//
+//    public SystemAction(String resourceId, String actionId) {
+//        this.resourceId = resourceId;
+//        this.actionId = actionId;
+////        this.predictedAttack = AttackType.NONE;
+//    }
 
     public void run(SystemEnvironment environment) {
 
@@ -36,6 +36,7 @@ public class SystemAction {
         }*/
 
         if (checkPreconditions(environment, action)){
+
             action.getPostCondition().run(environment.getSystemState(), this.resourceId, RandomUtils.random.nextDouble());
             if(!DynDQNMain.training) {
                 System.out.println("RUN Action: " + this.actionId + " -> " + this.resourceId);

@@ -5,6 +5,6 @@ public enum AttackType {
     NONE,
     DOS,
     PORT_SCAN,
-    MALWARE
+
 }
 
